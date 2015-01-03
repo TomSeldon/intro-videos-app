@@ -1,6 +1,8 @@
 'use strict';
 
 var DEFAULT_PORT = 3000;
+var DEFAULT_ALLOWED_FILE_EXTS = ['.m4v'];
+var DEFAULT_IGNORE_DOT_FILES = true;
 
 var fs = require('fs');
 var path = require('path');
@@ -12,6 +14,8 @@ var express = require('express');
 var app = express();
 var videoDir = process.env.INTRO_VIDEO_DIR;
 var port = process.env.INTRO_VIDEO_PORT || DEFAULT_PORT;
+var allowedFileExtensions = process.env.INTRO_VIDEO_ALLOWED_EXTS || DEFAULT_ALLOWED_FILE_EXTS;
+var ignoreDotFiles = process.env.INTRO_VIDEO_IGNORE_DOT_DILES || DEFAULT_IGNORE_DOT_FILES;
 var accessLogStream = fs.createWriteStream(__dirname + '/access.log', {flags: 'a'});
 var logger = new winston.Logger({
     transports: [
@@ -41,25 +45,42 @@ if (!videoDir) {
     process.exit(1);
 }
 
+if (typeof allowedFileExtensions === 'string') {
+    allowedFileExtensions = allowedFileExtensions.split(',');
+}
+
 app.use(morgan('combined', {stream: accessLogStream}));
 
-app.route('/')
-    .get(function(req, res) {
-        getIntroVideos()
-            .then(getRandomVideo)
-            .then(function(video) {
-                logger.debug('Responding with: ' + video);
+app.get('/', function(req, res) {
+    getRandomIntroVideo()
+        .then(function(video) {
+            logger.debug('Responding with: ' + video);
 
-                res.sendFile(video);
-            });
-    });
+            res.sendFile(video);
+        });
+});
 
 app.listen(port, function() {
     logger.debug('Serving random videos...');
 });
 
-function getIntroVideos() {
-    return readdir(videoDir);
+function getRandomIntroVideo() {
+    return getAvailableVideos()
+        .then(getRandomVideo);
+}
+
+function getAvailableVideos() {
+    return readdir(videoDir)
+        .then(function(files) {
+            return files.filter(function(file) {
+                var ext = path.extname(file);
+                var basename = path.basename(file);
+                var isValid = allowedFileExtensions.indexOf(ext) !== -1;
+                var isDotFile = basename.indexOf('.') === 0;
+
+                return isValid && (ignoreDotFiles && !isDotFile || !ignoreDotFiles);
+            });
+        });
 }
 
 function getRandomVideo(videos) {

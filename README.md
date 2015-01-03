@@ -22,3 +22,6 @@ Server will run on `http://localhost:3000` (or whatever port you've configured; 
 `INTRO_VIDEO_DIR` - *required* - Directory where intro videos are located.
 
 `INTRO_VIDEO_PORT` - *default: 3000* - Port that the application will run on.
+
+`INTRO_VIDEO_ALLOWED_EXTS` - *default: `".m4v"` - Allowed file extensions the app will serve. Use comma separate values
+to specify alternatives.
