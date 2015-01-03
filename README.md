@@ -20,4 +20,5 @@ Server will run on `http://localhost:3000` (or whatever port you've configured; 
 
 ## Config:
 `INTRO_VIDEO_DIR` - *required* - Directory where intro videos are located.
+
 `INTRO_VIDEO_PORT` - *default: 3000* - Port that the application will run on.
